@@ -24,7 +24,7 @@ class Capturing(list):
         sys.stdout = self._stdout
 
 
-def test(actual_result, expected_result, function_name):
+def finally_a_test(actual_result, expected_result, function_name):
     status = STATUS_SUCCESS
     try:
         if isinstance(actual_result, list):
@@ -34,8 +34,8 @@ def test(actual_result, expected_result, function_name):
                     status = STATUS_FAILURE
                     p(f"line #{line_num}: expecting {expected_line} found {actual_result[line_num]}")
 
-        elif isinstance(expected_result, (int, float)) and isinstance(actual_result, (int, float)):
-            status = abs(expected_result - actual_result) >= EPSILON
+        elif isinstance(expected_result, (int, float)) and isinstance(actual_result, (int, float, str)):
+            status = abs(expected_result - float(actual_result)) >= EPSILON
 
         elif isinstance(expected_result, str) and isinstance(actual_result, str):
             status = expected_result != actual_result
@@ -66,7 +66,6 @@ def test(actual_result, expected_result, function_name):
 
 
 def test_if_recursive(file_name, function):
-    # p(f"test_if_recursive(): {function}")
     rv = False
     msg = None
     state = "before function"
@@ -220,11 +219,12 @@ def tests():
             grade_comment += ' ;'
         grade_comment += "Could not find repeat_number()"
         grade_number -= grade_per_test
+        grade_number = max(grade_number, 0)
 
     ######
     # Do the tests
     for a_test in tests_list:
-        status, msg = test(a_test[0], a_test[1], a_test[2])
+        status, msg = finally_a_test(a_test[0], a_test[1], a_test[2])
         if status == STATUS_FAILURE:
             grade_number -= a_test[3]
             if len(grade_comment):
