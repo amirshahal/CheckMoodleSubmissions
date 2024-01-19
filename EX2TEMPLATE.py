@@ -10,7 +10,7 @@ STATUS_SUCCESS = False
 STATUS_FAILURE = True
 
 os.environ["PYTHONDONTWRITEBYTECODE"] = "True"
-
+student_file = "STUDENT_FILE.py"
 
 class Capturing(list):
     def __enter__(self):
@@ -50,7 +50,7 @@ def finally_a_test(actual_result, expected_result, function_name):
           f",result= {status_text}"
 
     current_dir = os.getcwd()
-    original_student_file = os.path.join(current_dir, "STUDENT_FILE.py")
+    original_student_file = os.path.join(current_dir, student_file)
     function_name, _ = function_name.split('(')
     recursive_status, recursive_comment = test_if_recursive(original_student_file, function_name)
 
