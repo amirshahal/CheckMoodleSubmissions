@@ -45,7 +45,7 @@ def finally_a_test(a_test):
                                f"First line: expected {expected_result[0]}, found {actual_result[0]}. " + \
                                f"Last line: expected {expected_result[-1]}, found {actual_result[-1]}"
             else:
-                for line_num, expected_line in enumerate(actual_result):
+                for line_num, expected_line in enumerate(expected_result):
                     if expected_line != actual_result[line_num]:
                         status = STATUS_FAILURE
                         detailed_msg = f"line #{line_num}: expecting {expected_line} found {actual_result[line_num]}"
@@ -68,10 +68,10 @@ def finally_a_test(a_test):
     # Additional tests, if needed
     current_dir = os.getcwd()
     original_student_file = os.path.join(current_dir, "STUDENT_FILE.py")
-    if "(" in function_name:
-        function_name, _ = function_name.split('(')
 
     if should_test_if_recursive:
+        if "(" in function_name:
+            function_name, _ = function_name.split('(')
         recursive_status, recursive_comment = test_if_recursive(original_student_file, function_name)
 
         if recursive_status == STATUS_FAILURE:
@@ -418,6 +418,138 @@ def load_ex4_tests():
     return tests_list, grade_number, grade_comment
 
 
+def load_ex51_tests():
+    tests_list = []
+    grade_per_test = 11
+    grade_number = 100
+    grade_comment = ""
+
+    # 1
+    # A. match_ends
+    # Given a list of strings, return the count of the number of
+    # strings where the string length is 2 or more and the first
+    # and last chars of the string are the same.
+
+    try:
+        # 1
+        tests_list.append([match_ends(['aba', 'xyz', 'aa', 'x', 'bbb']), 3,
+                           "match_ends(['aba', 'xyz', 'aa', 'x', 'bbb'])", grade_per_test])
+        tests_list.append([match_ends(['', 'x', 'xy', 'xyx', 'xx']), 2,
+                           "match_ends(['', 'x', 'xy', 'xyx', 'xx'])", grade_per_test])
+        tests_list.append([match_ends(['aaa', 'be', 'abc', 'hello']), 1,
+                           "match_ends(['aaa', 'be', 'abc', 'hello'])", grade_per_test])
+    except NameError as error:
+        if len(grade_comment):
+            grade_comment += ' ;'
+        grade_comment += str(error)
+        grade_number -= grade_per_test
+
+    # 2
+    # B. front_x
+    # Given a list of strings, return a list with the strings
+    # in sorted order, except group all the strings that begin with 'x' first.
+    # e.g. ['mix', 'xyz', 'apple', 'xanadu', 'aardvark'] yields
+    # ['xanadu', 'xyz', 'aardvark', 'apple', 'mix']
+    # Hint: this can be done by making 2 lists and sorting each of them
+    # before combining them.
+
+    try:
+        tests_list.append([front_x(['bbb', 'ccc', 'axx', 'xzz', 'xaa']),
+                           ['xaa', 'xzz', 'axx', 'bbb', 'ccc'],
+                            "front_x(['bbb', 'ccc', 'axx', 'xzz', 'xaa'])", grade_per_test])
+        tests_list.append([front_x(['ccc', 'bbb', 'aaa', 'xcc', 'xaa']),
+                           ['xaa', 'xcc', 'aaa', 'bbb', 'ccc'],
+                          "front_x(['ccc', 'bbb', 'aaa', 'xcc', 'xaa'])", grade_per_test])
+        tests_list.append([front_x(['mix', 'xyz', 'apple', 'xanadu', 'aardvark']),
+                           ['xanadu', 'xyz', 'aardvark', 'apple', 'mix'],
+                            "front_x(['mix', 'xyz', 'apple', 'xanadu', 'aardvark'])", grade_per_test])
+
+    except NameError as error:
+        if len(grade_comment):
+            grade_comment += ' ;'
+        grade_comment += str(error)
+        grade_number -= grade_per_test
+
+
+    # 3
+    # C. sort_last
+    # Given a list of non-empty tuples, return a list sorted in increasing
+    # order by the last element in each tuple.
+    # e.g. [(1, 7), (1, 3), (3, 4, 5), (2, 2)] yields
+    # [(2, 2), (1, 3), (3, 4, 5), (1, 7)]
+    # Hint: use a custom key= function to extract the last element form each tuple.
+
+    try:
+        tests_list.append([sort_last([(1, 3), (3, 2), (2, 1)]),
+                           [(2, 1), (3, 2), (1, 3)],
+                            "sort_last([(1, 3), (3, 2), (2, 1)])", grade_per_test])
+        tests_list.append([sort_last([(2, 3), (1, 2), (3, 1)]),
+                           [(3, 1), (1, 2), (2, 3)],
+                            "sort_last([(2, 3), (1, 2), (3, 1])", grade_per_test])
+        tests_list.append([sort_last([(1, 7), (1, 3), (3, 4, 5), (2, 2)]),
+                           [(2, 2), (1, 3), (3, 4, 5), (1, 7)],
+                            "sort_last([(1, 7), (1, 3), (3, 4, 5), (2, 2)])", grade_per_test])
+
+    except NameError as error:
+        if len(grade_comment):
+            grade_comment += ' ;'
+        grade_comment += str(error)
+        grade_number -= grade_per_test
+
+    return tests_list, grade_number, grade_comment
+
+
+def load_ex52_tests():
+    tests_list = []
+    grade_per_test = 17
+    grade_number = 100
+    grade_comment = ""
+
+    # 1
+    try:
+        # 1
+        expected_remove_adjacent1 = []
+        for i in range(1, 4):
+            expected_remove_adjacent1.append(i)
+
+        expected_remove_adjacent2 = []
+        for i in range(2, 4):
+            expected_remove_adjacent2.append(i)
+
+        tests_list.append([remove_adjacent([1, 2, 2, 3]), expected_remove_adjacent1,
+                           "remove_adjacent([1, 2, 2, 3])", grade_per_test, True])
+        tests_list.append([remove_adjacent([2, 2, 3, 3, 3]), expected_remove_adjacent2,
+                           "remove_adjacent([2, 2, 2, 3, 3])", grade_per_test, True])
+        tests_list.append([remove_adjacent([]), [],
+                           "remove_adjacent([])", grade_per_test, True])
+    except NameError as error:
+        if len(grade_comment):
+            grade_comment += ' ;'
+        grade_comment += str(error)
+        grade_number -= grade_per_test
+
+    # 2
+    linear_merge1 = ['aa', 'bb', 'cc', 'xx', 'zz']
+    linear_merge2 = ['aa', 'bb', 'cc', 'xx', 'zz']
+    linear_merge3 = ['aa', 'aa', 'aa', 'bb', 'bb']
+
+    try:
+        tests_list.append([linear_merge(['aa', 'xx', 'zz'], ['bb', 'cc']),
+                           linear_merge1, "linear_merge(['aa', 'xx', 'zz'], ['bb', 'cc'])", grade_per_test, True])
+        tests_list.append([linear_merge(['aa', 'xx'], ['bb', 'cc', 'zz']),
+                           linear_merge2, "linear_merge(['aa', 'xx'], ['bb', 'cc', 'zz])", grade_per_test, True])
+        tests_list.append([linear_merge(['aa', 'aa'], ['aa', 'bb', 'bb']),
+                           linear_merge3, "linear_merge(['aa', 'aa'], ['aa', 'bb', 'bb'])", grade_per_test, True])
+
+    except NameError as error:
+        if len(grade_comment):
+            grade_comment += ' ;'
+        grade_comment += str(error)
+        grade_number -= grade_per_test
+
+    return tests_list, grade_number, grade_comment
+
+
 def do_the_tests(tests_list, grade_number, grade_comment):
     for a_test in tests_list:
         status, msg = finally_a_test(a_test)
@@ -438,6 +570,19 @@ def main():
         tests_list, grade_number, grade_comment = load_ex3_tests()
     elif "EX4." in student_file:
         tests_list, grade_number, grade_comment = load_ex4_tests()
+    elif "EX5." in student_file:
+        tests_list1, grade_number1, grade_comment1 = load_ex51_tests()
+        tests_list2, grade_number2, grade_comment2 = load_ex52_tests()
+        tests_list = tests_list1 + tests_list2
+        grade_comment = f"{grade_comment1}"
+        if len(grade_comment):
+            grade_comment += ", "
+        grade_comment += grade_comment2
+        grade_number = round((grade_number1 + grade_number2) / 2)
+    elif "EX51." in student_file:
+        tests_list, grade_number, grade_comment = load_ex51_tests()
+    elif "EX52." in student_file:
+        tests_list, grade_number, grade_comment = load_ex52_tests()
     else:
         p(f"Can NOT figure which test to run on {student_file}", True)
     do_the_tests(tests_list, grade_number, grade_comment)
