@@ -397,6 +397,7 @@ def load_ex4_tests():
         tests_list.append([fix_start('google'), 'goo*le', "fix_start('google')", grade_per_test, True])
         tests_list.append([fix_start('donut'), 'donut', "fix_start('donut')", grade_per_test, True])
     except NameError as error:
+
         if len(grade_comment):
             grade_comment += ' ;'
         grade_comment += str(error)
