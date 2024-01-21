@@ -151,47 +151,47 @@ def load_ex2_tests():
     # 1
     try:
         tests_list.append([multiple(3, 4), 3 * 4, "multiple(3 * 4)", grade_per_test, True])
-    except NameError:
+    except NameError as error:
         if len(grade_comment):
             grade_comment += ' ;'
-        grade_comment += "Could not find multiple()"
+        grade_comment += str(error)
         grade_number -= grade_per_test
 
     # 2
     try:
         tests_list.append([power(3, 4), math.pow(3, 4), "power(3, 4)", grade_per_test, True])
-    except NameError:
+    except NameError as error:
         if len(grade_comment):
             grade_comment += ' ;'
-        grade_comment += "Could not find power()"
+        grade_comment += str(error)
         grade_number -= grade_per_test
     # 3
     try:
         tests_list.append([divide(25, 5), 5, "divide(25, 5)", grade_per_test, True])
-    except NameError:
+    except NameError as error:
         if len(grade_comment):
             grade_comment += ' ;'
-        grade_comment += "Could not find divide()"
+        grade_comment += str(error)
         grade_number -= grade_per_test
 
     # 4
     try:
         tests_list.append([modulo_10(63), 3, "modulo_10(63)", grade_per_test, True])
         tests_list.append([modulo_10(0), 0, "modulo_10(0)", grade_per_test, True])
-    except NameError:
+    except NameError as error:
         if len(grade_comment):
             grade_comment += ' ;'
-        grade_comment += "Could not find modulo_10()"
+        grade_comment += str(error)
         grade_number -= grade_per_test
 
     # 5
     try:
         tests_list.append([modulo_n(65, 4), 1, "modulo_n(65, 4)", grade_per_test, True])
         tests_list.append([modulo_n(64, 4), 0, "modulo_n(64, 4)", grade_per_test, True])
-    except NameError:
+    except NameError as error:
         if len(grade_comment):
             grade_comment += ' ;'
-        grade_comment += "Could not find modulo_n()"
+        grade_comment += str(error)
         grade_number -= grade_per_test
 
     # 6
@@ -214,10 +214,10 @@ def load_ex2_tests():
         with Capturing() as output:
             stars(5)
         tests_list.append([output[0], "*****", "stars(5)", grade_per_test, True])
-    except NameError:
+    except NameError as error:
         if len(grade_comment):
             grade_comment += ' ;'
-        grade_comment += "Could not find stars()"
+        grade_comment += str(error)
         grade_number -= grade_per_test
 
     # 8
@@ -229,10 +229,10 @@ def load_ex2_tests():
             triangleUpSideDown(5)
         tests_list.append(
             [output, triangle_up_side_down_expected_output, "triangleUpSideDown(5)", grade_per_test, True])
-    except NameError:
+    except NameError as error:
         if len(grade_comment):
             grade_comment += ' ;'
-        grade_comment += "Could not find triangleUpSideDown()"
+        grade_comment += str(error)
         grade_number -= grade_per_test
 
     # 9
@@ -243,10 +243,10 @@ def load_ex2_tests():
         with Capturing() as output:
             triangle(4)
         tests_list.append([output, triangle_expected_output, "triangle(4)", grade_per_test, True])
-    except NameError:
+    except NameError as error:
         if len(grade_comment):
             grade_comment += ' ;'
-        grade_comment += "Could not find triangle()"
+        grade_comment += str(error)
         grade_number -= grade_per_test
 
     # 10
@@ -254,10 +254,10 @@ def load_ex2_tests():
         with Capturing() as output:
             reverse_number(123)
         tests_list.append([output[0], 321, "reverse_number(123)", grade_per_test, True])
-    except NameError:
+    except NameError as error:
         if len(grade_comment):
             grade_comment += ' ;'
-        grade_comment += "Could not find reverse_number()"
+        grade_comment += str(error)
         grade_number -= grade_per_test
 
     # 11 and last
@@ -265,10 +265,10 @@ def load_ex2_tests():
         with Capturing() as output:
             repeat_number(123)
         tests_list.append([output[0], 123, "repeat_number(123)", grade_per_test, True])
-    except NameError:
+    except NameError as error:
         if len(grade_comment):
             grade_comment += ' ;'
-        grade_comment += "Could not find repeat_number()"
+        grade_comment += str(error)
         grade_number -= grade_per_test
         grade_number = max(grade_number, 0)
     return tests_list, grade_number, grade_comment
@@ -290,22 +290,22 @@ def load_ex3_tests():
             print_in_loop_1_to_40()
             tests_list.append([output, expected_result_1_40, "print_in_loop_1_to_40", grade_per_test, False,
                                "for"])
-    except NameError:
+    except NameError as error:
         if len(grade_comment):
             grade_comment += ' ;'
-        grade_comment += "Could not find print_in_loop_1_to_40()"
+        grade_comment += str(error)
         grade_number -= grade_per_test
 
     # 2
     try:
         with Capturing() as output:
             print_in_while_1_to_40()
-            tests_list.append([output, exepcted_result_1_40, "print_in_while_1_to_40", grade_per_test, False,
+            tests_list.append([output, expected_result_1_40, "print_in_while_1_to_40", grade_per_test, False,
                                "while"])
-    except NameError:
+    except NameError as error:
         if len(grade_comment):
             grade_comment += ' ;'
-        grade_comment += "Could not find print_in_while_1_to_40()"
+        grade_comment += str(error)
         grade_number -= grade_per_test
 
     # 3
@@ -317,10 +317,10 @@ def load_ex3_tests():
         with Capturing() as output:
             boom()
         tests_list.append([output, boom_expected_output, "boom()", grade_per_test])
-    except NameError:
+    except NameError as error:
         if len(grade_comment):
             grade_comment += ' ;'
-        grade_comment += "Could not find boom()"
+        grade_comment += str(error)
         grade_number -= grade_per_test
 
     # 4
@@ -333,10 +333,10 @@ def load_ex3_tests():
         with Capturing() as output:
             fib()
         tests_list.append([output, fib_expected_output, "fib()", grade_per_test])
-    except NameError:
+    except NameError as error:
         if len(grade_comment):
             grade_comment += ' ;'
-        grade_comment += "Could not find fib()"
+        grade_comment += str(error)
         grade_number -= grade_per_test
 
     # 5
@@ -351,10 +351,10 @@ def load_ex3_tests():
         with Capturing() as output:
             print_dec()
         tests_list.append([output, dec_print_expected_output, "print_dec()", grade_per_test])
-    except NameError:
+    except NameError as error:
         if len(grade_comment):
             grade_comment += ' ;'
-        grade_comment += "Could not find print_dec()"
+        grade_comment += str(error)
         grade_number -= grade_per_test
 
     return tests_list, grade_number, grade_comment
@@ -372,10 +372,10 @@ def load_ex4_tests():
         tests_list.append([donuts(9), 'Number of donuts: 9', "donuts(9)", grade_per_test, True])
         tests_list.append([donuts(10), 'Number of donuts: many', "donuts(10)", grade_per_test, True])
         tests_list.append([donuts(99), 'Number of donuts: many', "donuts(99)", grade_per_test, True])
-    except NameError:
+    except NameError as error:
         if len(grade_comment):
             grade_comment += ' ;'
-        grade_comment += "Could not find donuts()"
+        grade_comment += str(error)
         grade_number -= grade_per_test
 
     # 2
@@ -384,10 +384,10 @@ def load_ex4_tests():
         tests_list.append([both_ends('Hello'), 'Helo', "both_ends('Hello')", grade_per_test, True])
         tests_list.append([both_ends('a'), '', "both_ends('a')", grade_per_test, True])
         tests_list.append([both_ends('xyz'), 'xyyz', "both_ends('xyz')", grade_per_test, True])
-    except NameError:
+    except NameError as error:
         if len(grade_comment):
             grade_comment += ' ;'
-        grade_comment += "Could not find donuts()"
+        grade_comment += str(error)
         grade_number -= grade_per_test
 
     # 3
@@ -396,10 +396,10 @@ def load_ex4_tests():
         tests_list.append([fix_start('aardvark'), 'a*rdv*rk', "fix_start('aardvark')", grade_per_test, True])
         tests_list.append([fix_start('google'), 'goo*le', "fix_start('google')", grade_per_test, True])
         tests_list.append([fix_start('donut'), 'donut', "fix_start('donut')", grade_per_test, True])
-    except NameError:
+    except NameError as error:
         if len(grade_comment):
             grade_comment += ' ;'
-        grade_comment += "Could not find donuts()"
+        grade_comment += str(error)
         grade_number -= grade_per_test
 
     # 4
@@ -408,10 +408,10 @@ def load_ex4_tests():
         tests_list.append([mix_up('dog', 'dinner'), 'dig donner', "mix_up('dog', 'dinner')", grade_per_test, True])
         tests_list.append([mix_up('gnash', 'sport'), 'spash gnort', "mix_up('gnash', 'sport')", grade_per_test, True])
         tests_list.append([mix_up('pezzy', 'firm'), 'fizzy perm', "mix_up('pezzy', 'firm')", grade_per_test, True])
-    except NameError:
+    except NameError as error:
         if len(grade_comment):
             grade_comment += ' ;'
-        grade_comment += "Could not find donuts()"
+        grade_comment += str(error)
         grade_number -= grade_per_test
 
     return tests_list, grade_number, grade_comment
