@@ -41,12 +41,13 @@ def finally_a_test(a_test):
         if isinstance(actual_result, list):
             if len(actual_result) != len(expected_result):
                 status = STATUS_FAILURE
-                detailed_msg = f"Expecting {len(expected_result)} lines, found {len(actual_result)}. " + \
-                               f"First line: expected {expected_result[0]}, found {actual_result[0]}. " + \
-                               f"Last line: expected {expected_result[-1]}, found {actual_result[-1]}"
+                detailed_msg = f"Expecting {len(expected_result)} lines, found {len(actual_result)}. "
+                if len(actual_result) and len(expected_result):
+                    detailed_msg += f"First line: expected {expected_result[0]}, found {actual_result[0]}. " + \
+                                    f"Last line: expected {expected_result[-1]}, found {actual_result[-1]}"
             else:
                 for line_num, expected_line in enumerate(expected_result):
-                    if expected_line != actual_result[line_num]:
+                    if str(expected_line) != str(actual_result[line_num]):
                         status = STATUS_FAILURE
                         detailed_msg = f"line #{line_num}: expecting {expected_line} found {actual_result[line_num]}"
 
@@ -67,7 +68,7 @@ def finally_a_test(a_test):
     #################
     # Additional tests, if needed
     current_dir = os.getcwd()
-    original_student_file = os.path.join(current_dir, "STUDENT_FILE.py")
+    original_student_file = os.path.join(current_dir, student_file)
 
     if should_test_if_recursive:
         if "(" in function_name:
@@ -550,6 +551,123 @@ def load_ex52_tests():
     return tests_list, grade_number, grade_comment
 
 
+def load_ex6_tests():
+    tests_list = []
+    grade_per_test = 25
+    grade_number = 100
+    grade_comment = ""
+
+    # 1
+    try:
+        actual_file_line_by_line = []
+        with open(__file__, encoding="utf8") as file_handler:
+            for line in file_handler.readlines():
+                actual_file_line_by_line.append(line.rstrip())
+        actual_file_line_by_line.append("")
+
+        with Capturing() as output:
+            read_from_file(__file__)
+        tests_list.append([output, actual_file_line_by_line,
+                          "read_from_file(__file__)", grade_per_test])
+    except (NameError, UnicodeDecodeError) as error:
+        if len(grade_comment):
+            grade_comment += ' ;'
+        if isinstance(error, UnicodeDecodeError):
+            grade_comment += "read_from_file() failed. Open file for reading using the following command: " +\
+                             "open(file, encoding=\"utf8\")"
+        else:
+            grade_comment += str(error)
+        grade_number -= grade_per_test
+
+    # 2
+    try:
+        file_as_str = '\n'.join(actual_file_line_by_line)
+        file_name = 'tmp_file_ex6.txt'
+        write_to_file(file_name, file_as_str)
+        with Capturing() as output:
+            read_from_file(file_name)
+        tests_list.append([output, actual_file_line_by_line,
+                          f"read_from_file(write_to_file({file_name}, (long string)", grade_per_test])
+    except (NameError, UnicodeDecodeError, TypeError) as error:
+        if len(grade_comment):
+            grade_comment += ' ;'
+        grade_comment += str(error)
+        grade_number -= grade_per_test
+
+    # 3
+    try:
+        file_with_2_lines = "file_with_2_lines"
+        file_with_2_lines_expected_file_content = []
+        with open(file_with_2_lines, 'w') as file_handler:
+            for i in range(1, 3):
+                file_handler.write(f"{i}\n")
+                file_with_2_lines_expected_file_content.append(f"{i}")
+
+        with Capturing() as output:
+            read_3_lines(file_with_2_lines)
+        tests_list.append([output, file_with_2_lines_expected_file_content,
+                           "read_3_lines(file_with_2_lines)", int(grade_per_test / 2)])
+    except (NameError, UnicodeDecodeError, TypeError) as error:
+        if len(grade_comment):
+            grade_comment += ' ;'
+        grade_comment += str(error)
+        grade_number -= grade_per_test
+
+    try:
+        file_with_4_lines = "file_with_4_lines"
+        file_with_4_lines_expected_file_content = []
+        with open(file_with_4_lines, 'w') as file_handler:
+            for i in range(1, 5):
+                file_handler.write(f"{i}\n")
+                if i < 4:
+                    file_with_4_lines_expected_file_content.append(f"{i}")
+
+        with Capturing() as output:
+            read_3_lines(file_with_4_lines)
+        tests_list.append([output, file_with_4_lines_expected_file_content,
+                           "read_3_lines(file_with_4_lines)", int(grade_per_test / 2)])
+    except (NameError, UnicodeDecodeError, TypeError) as error:
+        if len(grade_comment):
+            grade_comment += ' ;'
+        grade_comment += str(error)
+        grade_number -= grade_per_test
+
+    try:
+        new_dir = "temp_ex6_dir"
+        if os.path.exists(new_dir):
+            for f in os.listdir(new_dir):
+                os.remove(os.path.join(new_dir, f))
+        else:
+            os.mkdir(new_dir)
+        file_in_new_dir = os.path.join(new_dir, file_with_2_lines)
+        copy_paste(file_with_2_lines, new_dir)
+        with Capturing() as output:
+            read_from_file(file_in_new_dir)
+
+        tests_list.append([output, file_with_2_lines_expected_file_content,
+                           f"copy_paste(ile_with_2_lines, {new_dir})\nread_from_file(file_in_new_dir){file_in_new_dir}",
+                           grade_per_test])
+    except (NameError, UnicodeDecodeError, TypeError, FileNotFoundError) as error:
+        if len(grade_comment):
+            grade_comment += ' ;'
+        grade_comment += str(error)
+        grade_number -= grade_per_test
+
+    except PermissionError as error:
+        if len(grade_comment):
+            grade_comment += ' ;'
+        grade_comment += str(error) + " (maybe you are trying to open a directory insted of writing to it?)"
+        grade_number -= grade_per_test
+
+    if os.path.exists(file_with_2_lines):
+        os.remove(file_with_2_lines)
+
+    if os.path.exists(file_with_4_lines):
+        os.remove(file_with_4_lines)
+    return tests_list, grade_number, grade_comment
+
+
+
 def do_the_tests(tests_list, grade_number, grade_comment):
     for a_test in tests_list:
         status, msg = finally_a_test(a_test)
@@ -583,6 +701,8 @@ def main():
         tests_list, grade_number, grade_comment = load_ex51_tests()
     elif "EX52." in student_file:
         tests_list, grade_number, grade_comment = load_ex52_tests()
+    elif "EX6." in student_file:
+        tests_list, grade_number, grade_comment = load_ex6_tests()
     else:
         p(f"Can NOT figure which test to run on {student_file}", True)
     do_the_tests(tests_list, grade_number, grade_comment)
