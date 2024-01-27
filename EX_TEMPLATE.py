@@ -2,6 +2,7 @@
 
 from STUDENT_FILE import *
 from datetime import datetime
+from inspect import signature
 from io import StringIO
 import math
 import os
@@ -142,6 +143,17 @@ def nice(str_in):
             str_out = f"{str_out[0:40]} ...(truncated)"
     return str_out
 
+
+
+def test_signature(fun, expected_num_of_args):
+    signature_bad_grade = 0
+    signature_comment = ""
+    sig = signature(fun)
+    if len(sig.parameters) != expected_num_of_args:
+        signature_bad_grade = 100
+        signature_comment = f"{fun.__name__}(): bad signature. The function expects {len(sig.parameters)} " + \
+                            f"parameters instead of {expected_num_of_args}"
+    return signature_bad_grade, signature_comment
 
 def load_ex2_tests():
     tests_list = []
@@ -556,108 +568,171 @@ def load_ex6_tests():
     grade_per_test = 25
     grade_number = 100
     grade_comment = ""
+    file_with_2_lines = "file_with_2_lines"
+    file_with_4_lines = "file_with_4_lines"
 
     # 1
+    test_function = True
     try:
-        actual_file_line_by_line = []
-        with open(__file__, encoding="utf8") as file_handler:
-            for line in file_handler.readlines():
-                actual_file_line_by_line.append(line.rstrip())
-        actual_file_line_by_line.append("")
-
-        with Capturing() as output:
-            read_from_file(__file__)
-        tests_list.append([output, actual_file_line_by_line,
-                          "read_from_file(__file__)", grade_per_test])
-    except (NameError, UnicodeDecodeError) as error:
-        if len(grade_comment):
-            grade_comment += ' ;'
-        if isinstance(error, UnicodeDecodeError):
-            grade_comment += "read_from_file() failed. Open file for reading using the following command: " +\
-                             "open(file, encoding=\"utf8\")"
-        else:
-            grade_comment += str(error)
+        assert callable(read_from_file)
+    except NameError as error:
         grade_number -= grade_per_test
+        grade_comment = str(error)
+        test_function = False
+
+    if test_function:
+        signature_bad_grade, signature_comment = test_signature(read_from_file, 1)
+        if signature_bad_grade == 100:
+            grade_number -= grade_per_test
+            grade_comment = signature_comment
+        else:
+            try:
+                actual_file_line_by_line = []
+                with open(__file__, encoding="utf8") as file_handler:
+                    for line in file_handler.readlines():
+                        actual_file_line_by_line.append(line.rstrip())
+                actual_file_line_by_line.append("")
+
+                with Capturing() as output:
+                    read_from_file(__file__)
+                tests_list.append([output, actual_file_line_by_line,
+                              "read_from_file(__file__)", grade_per_test])
+            except (NameError, UnicodeDecodeError) as error:
+                if len(grade_comment):
+                    grade_comment += ' ;'
+                if isinstance(error, UnicodeDecodeError):
+                    grade_comment += "read_from_file() failed. Open file for reading using the following command: " +\
+                                     "open(file, encoding=\"utf8\")"
+                else:
+                    grade_comment += str(error)
+                grade_number -= grade_per_test
 
     # 2
+    test_function = True
     try:
-        file_as_str = '\n'.join(actual_file_line_by_line)
-        file_name = 'tmp_file_ex6.txt'
-        write_to_file(file_name, file_as_str)
-        with Capturing() as output:
-            read_from_file(file_name)
-        tests_list.append([output, actual_file_line_by_line,
-                          f"read_from_file(write_to_file({file_name}, (long string)", grade_per_test])
-    except (NameError, UnicodeDecodeError, TypeError) as error:
-        if len(grade_comment):
-            grade_comment += ' ;'
-        grade_comment += str(error)
+        assert callable(write_to_file)
+    except NameError as error:
         grade_number -= grade_per_test
+        if len(grade_comment):
+            grade_comment += " ;"
+        grade_comment += str(error)
+        test_function = False
+
+    if test_function:
+        signature_bad_grade, signature_comment = test_signature(write_to_file, 2)
+        if signature_bad_grade == 100:
+            grade_number -= grade_per_test
+            grade_comment = signature_comment
+        else:
+            try:
+                file_as_str = '\n'.join(actual_file_line_by_line)
+                file_name = 'tmp_file_ex6.txt'
+                write_to_file(file_name, file_as_str)
+                with Capturing() as output:
+                    read_from_file(file_name)
+                tests_list.append([output, actual_file_line_by_line,
+                                  f"read_from_file(write_to_file({file_name}, (long string)", grade_per_test])
+            except (NameError, UnicodeDecodeError, TypeError) as error:
+                if len(grade_comment):
+                    grade_comment += ' ;'
+                grade_comment += str(error)
+                grade_number -= grade_per_test
 
     # 3
+    test_function = True
     try:
-        file_with_2_lines = "file_with_2_lines"
-        file_with_2_lines_expected_file_content = []
-        with open(file_with_2_lines, 'w') as file_handler:
-            for i in range(1, 3):
-                file_handler.write(f"{i}\n")
-                file_with_2_lines_expected_file_content.append(f"{i}")
-
-        with Capturing() as output:
-            read_3_lines(file_with_2_lines)
-        tests_list.append([output, file_with_2_lines_expected_file_content,
-                           "read_3_lines(file_with_2_lines)", int(grade_per_test / 2)])
-    except (NameError, UnicodeDecodeError, TypeError) as error:
-        if len(grade_comment):
-            grade_comment += ' ;'
-        grade_comment += str(error)
+        assert callable(read_3_lines)
+    except NameError as error:
         grade_number -= grade_per_test
-
-    try:
-        file_with_4_lines = "file_with_4_lines"
-        file_with_4_lines_expected_file_content = []
-        with open(file_with_4_lines, 'w') as file_handler:
-            for i in range(1, 5):
-                file_handler.write(f"{i}\n")
-                if i < 4:
-                    file_with_4_lines_expected_file_content.append(f"{i}")
-
-        with Capturing() as output:
-            read_3_lines(file_with_4_lines)
-        tests_list.append([output, file_with_4_lines_expected_file_content,
-                           "read_3_lines(file_with_4_lines)", int(grade_per_test / 2)])
-    except (NameError, UnicodeDecodeError, TypeError) as error:
         if len(grade_comment):
-            grade_comment += ' ;'
+            grade_comment += " ;"
         grade_comment += str(error)
-        grade_number -= grade_per_test
+        test_function = False
 
-    try:
-        new_dir = "temp_ex6_dir"
-        if os.path.exists(new_dir):
-            for f in os.listdir(new_dir):
-                os.remove(os.path.join(new_dir, f))
+    if test_function:
+        signature_bad_grade, signature_comment = test_signature(read_3_lines, 1)
+        if signature_bad_grade == 100:
+            grade_number -= grade_per_test
+            grade_comment = signature_comment
         else:
-            os.mkdir(new_dir)
-        file_in_new_dir = os.path.join(new_dir, file_with_2_lines)
-        copy_paste(file_with_2_lines, new_dir)
-        with Capturing() as output:
-            read_from_file(file_in_new_dir)
+            try:
+                file_with_2_lines_expected_file_content = []
+                with open(file_with_2_lines, 'w') as file_handler:
+                    for i in range(1, 3):
+                        file_handler.write(f"{i}\n")
+                        file_with_2_lines_expected_file_content.append(f"{i}")
 
-        tests_list.append([output, file_with_2_lines_expected_file_content,
-                           f"copy_paste(ile_with_2_lines, {new_dir})\nread_from_file(file_in_new_dir){file_in_new_dir}",
-                           grade_per_test])
-    except (NameError, UnicodeDecodeError, TypeError, FileNotFoundError) as error:
+                with Capturing() as output:
+                    read_3_lines(file_with_2_lines)
+                tests_list.append([output, file_with_2_lines_expected_file_content,
+                                   "read_3_lines(file_with_2_lines)", int(grade_per_test / 2)])
+            except (NameError, UnicodeDecodeError, TypeError) as error:
+                if len(grade_comment):
+                    grade_comment += ' ;'
+                grade_comment += str(error)
+                grade_number -= grade_per_test
+
+            try:
+                file_with_4_lines_expected_file_content = []
+                with open(file_with_4_lines, 'w') as file_handler:
+                    for i in range(1, 5):
+                        file_handler.write(f"{i}\n")
+                        if i < 4:
+                            file_with_4_lines_expected_file_content.append(f"{i}")
+
+                with Capturing() as output:
+                    read_3_lines(file_with_4_lines)
+                tests_list.append([output, file_with_4_lines_expected_file_content,
+                                   "read_3_lines(file_with_4_lines)", int(grade_per_test / 2)])
+            except (NameError, UnicodeDecodeError, TypeError) as error:
+                if len(grade_comment):
+                    grade_comment += ' ;'
+                grade_comment += str(error)
+                grade_number -= grade_per_test
+
+    # 4
+    test_function = True
+    try:
+        assert callable(copy_paste)
+    except NameError as error:
+        grade_number -= grade_per_test
         if len(grade_comment):
-            grade_comment += ' ;'
+            grade_comment += " ;"
         grade_comment += str(error)
-        grade_number -= grade_per_test
+        test_function = False
 
-    except PermissionError as error:
-        if len(grade_comment):
-            grade_comment += ' ;'
-        grade_comment += str(error) + " (maybe you are trying to open a directory insted of writing to it?)"
-        grade_number -= grade_per_test
+    if test_function:
+        signature_bad_grade, signature_comment = test_signature(copy_paste, 2)
+        if signature_bad_grade == 100:
+            grade_number -= grade_per_test
+            grade_comment = signature_comment
+        else:
+            try:
+                new_dir = "temp_ex6_dir"
+                if os.path.exists(new_dir):
+                    for f in os.listdir(new_dir):
+                        os.remove(os.path.join(new_dir, f))
+                else:
+                    os.mkdir(new_dir)
+                file_in_new_dir = os.path.join(new_dir, file_with_2_lines)
+                copy_paste(file_with_2_lines, new_dir)
+                with Capturing() as output:
+                    read_from_file(file_in_new_dir)
+
+                tests_list.append([output, file_with_2_lines_expected_file_content,
+                                   f"copy_paste(ile_with_2_lines, {new_dir})\nread_from_file(file_in_new_dir){file_in_new_dir}",
+                                   grade_per_test])
+            except (NameError, UnicodeDecodeError, TypeError, FileNotFoundError) as error:
+                if len(grade_comment):
+                    grade_comment += ' ;'
+                grade_comment += str(error)
+                grade_number -= grade_per_test
+            except PermissionError as error:
+                if len(grade_comment):
+                    grade_comment += ' ;'
+                grade_comment += str(error) + " (did you provide directory as second argument? " + \
+                                 "or maybe you are trying to open a directory insted of writing to it?)"
+                grade_number -= grade_per_test
 
     if os.path.exists(file_with_2_lines):
         os.remove(file_with_2_lines)
@@ -665,7 +740,6 @@ def load_ex6_tests():
     if os.path.exists(file_with_4_lines):
         os.remove(file_with_4_lines)
     return tests_list, grade_number, grade_comment
-
 
 
 def do_the_tests(tests_list, grade_number, grade_comment):
