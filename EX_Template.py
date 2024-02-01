@@ -352,6 +352,7 @@ def test_ex3():
         p(f"Test failed. functionality_grade= 0 ,functionality_comment= {error}")
         # return 0, str(error)
 
+
 def test_ex4():
     try:
         tests_list = [
@@ -377,6 +378,7 @@ def test_ex4():
     except NameError as error:
         p(f"Test failed. functionality_grade= 0 ,functionality_comment= {error}")
         return 0, str(error)
+
 
 def load_ex51_tests():
     tests_list = []
