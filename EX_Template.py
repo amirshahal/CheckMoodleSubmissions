@@ -1,6 +1,6 @@
 # Amir Shahal, Jan 2024
 
-from RF_EX3 import *
+from STUDENT_FILE import *
 from datetime import datetime
 from inspect import signature
 from io import StringIO
@@ -13,21 +13,29 @@ STATUS_SUCCESS = False
 STATUS_FAILURE = True
 
 os.environ["PYTHONDONTWRITEBYTECODE"] = "True"
-student_file = "RF_EX3.py"
+student_file = "STUDENT_FILE.py"
 
 
 class Test:
     def __init__(self, function, params, expected_results,
-                 capture_output, max_grade, a_word_to_look_for):
+                 capture_output, a_word_to_look_for, max_grade):
         self.function = function
         self.params = params
         self.expected_results = expected_results
         self.capture_output = capture_output
         self.max_grade = max_grade
-        self.actual_grade = max_grade # for now...
+        self.actual_grade = max_grade  # for now...
         self.a_word_to_look_for = a_word_to_look_for
-        self.grade_per_test = round(max_grade / len(expected_results))
+        self.grade_per_test = max_grade / len(expected_results)
         self.grade_comment = ""
+        self.__do_the_test()
+
+    def __str__(self):
+        grade_comment_str = "None" if self.grade_comment == "" else self.grade_comment
+        rv = f"Test {self.function.__name__}({self.params}): " + \
+             f"grade_number= {round(self.actual_grade, 2)}/{self.max_grade}" + \
+             f" ,grade_comment= {grade_comment_str}"
+        return rv
 
     def __test_if_function_contains_a_word(self):
         state = "before function"
@@ -50,24 +58,34 @@ class Test:
     def __do_specific_test(self, params, expected_result):
         if self.capture_output:
             with Capturing() as actual_result:
-                self.function()
+                self.function(*params)
+            if len(actual_result) == 1:
+                actual_result = actual_result[0]
         else:
-            actual_result = self.function()
+            actual_result = self.function(*params)
         try:
             default_failed_msg = f"{self.function.__name__}() expected_result= {nice(expected_result)} " +\
                                  f",actual_result={nice(actual_result)}"
             if isinstance(actual_result, list):
                 if len(actual_result) != len(expected_result):
                     self.actual_grade -= self.grade_per_test
-                    self.grade_comment = f"{self.function.__name__}() Expecting {len(expected_result)} lines, found {len(actual_result)}. "
+                    self.grade_comment = f"{self.function.__name__}() Expecting {len(expected_result)} lines, " + \
+                                         f"found {len(actual_result)}. "
                     if len(actual_result) and len(expected_result):
-                        self.grade_comment += f"{self.function.__name__}() First line: expected {expected_result[0]}, found {actual_result[0]}. " + \
+                        self.grade_comment += f"{self.function.__name__}() " + \
+                                              f"First line: expected {expected_result[0]}, " + \
+                                              f"found {actual_result[0]}. " + \
                                               f"Last line: expected {expected_result[-1]}, found {actual_result[-1]}"
                 else:
+                    grade_discarded = False
                     for line_num, expected_line in enumerate(expected_result):
                         if str(expected_line) != str(actual_result[line_num]):
-                            self.actual_grade -= self.grade_per_test
-                            self.grade_comment = f"{self.function.__name__}() line #{line_num}: expecting {expected_line} found {actual_result[line_num]}"
+                            if not grade_discarded:
+                                # do once per test and not once per line
+                                self.actual_grade -= self.grade_per_test
+                                grade_discarded = True
+                            self.grade_comment = f"{self.function.__name__}() line #{line_num}: " + \
+                                                 f"expecting {expected_line} found {actual_result[line_num]}"
 
             elif isinstance(expected_result, (int, float)) and isinstance(actual_result, (int, float, str)):
                 if abs(expected_result - float(actual_result)) >= EPSILON:
@@ -92,8 +110,8 @@ class Test:
                 self.grade_comment += " ;"
             self.grade_comment += default_failed_msg
 
-    def do_the_test(self):
-        # First do all general tests for the function, then run the fnction
+    def __do_the_test(self):
+        # First do all general tests for the function, then run the function
         # for each input and compare the results to the expected output
 
         grade_before_general_tests = self.actual_grade
@@ -106,7 +124,7 @@ class Test:
             sig = signature(self.function)
             if len(sig.parameters) != len(self.params[0]):
                 self.actual_grade = 0
-                self.grade_comment = f"{self.function.__name__}(): expects {len(sig.parameters)}" + \
+                self.grade_comment = f"{self.function.__name__}(): expects {len(sig.parameters)} params" + \
                                      f" instead of {len(self.params[0])}"
             else:
                 # Signature is as expected, in case there is a need to find specific word
@@ -206,7 +224,6 @@ def test_if_recursive(file_name, function):
     return test_if_function_contains_a_word(file_name, function, f"{function}(")
 
 
-
 def p(msg, should_exit=False):
     if should_exit:
         msg += " .Quitting"
@@ -217,17 +234,19 @@ def p(msg, should_exit=False):
 
 def nice(str_in):
     # return a nice representation of the input
-    str_out = str_in
+    str_out = str(str_in)
     if isinstance(str_in, list):
         str_out = ""
         for str_in_line in str_in:
             str_out += f"{str_in_line};"
         str_out = str_out[0:-1]
 
-        if len(str_out) > 45:
-            str_out = f"{str_out[0:40]} ...(truncated)"
-    return str_out
+    if len(str_out) > 45:
+        str_out = f"{str_out[0:40]} ...(truncated)"
 
+    if str_out.strip() == "":
+        str_out = f"({len(str_in)} white spaces)"
+    return str_out
 
 
 def test_signature(fun, expected_num_of_args):
@@ -240,261 +259,124 @@ def test_signature(fun, expected_num_of_args):
                             f"parameters instead of {expected_num_of_args}"
     return signature_bad_grade, signature_comment
 
-def load_ex2_tests():
-    tests_list = []
-    grade_per_test = 10
-    grade_number = 100
+
+def test(tests_list, tests_grades_array=None):
+    number_of_tests = len(tests_list)
+    default_grade_per_test = round(100 / number_of_tests, 2)
+    grade_number = 0  # Earn it!
     grade_comment = ""
 
-    # 1
-    try:
-        tests_list.append([multiple(3, 4), 3 * 4, "multiple(3 * 4)", grade_per_test, True])
-    except NameError as error:
+    for test_num, test_params in enumerate(tests_list):
+        test_grade = default_grade_per_test if tests_grades_array is None else tests_grades_array[test_num]
+        a_test = Test(*test_params, test_grade)
+        grade_number += a_test.actual_grade
         if len(grade_comment):
-            grade_comment += ' ;'
-        grade_comment += str(error)
-        grade_number -= grade_per_test
+            grade_comment += "; "
+        grade_comment += a_test.grade_comment
+        p(a_test)
 
-    # 2
-    try:
-        tests_list.append([power(3, 4), math.pow(3, 4), "power(3, 4)", grade_per_test, True])
-    except NameError as error:
-        if len(grade_comment):
-            grade_comment += ' ;'
-        grade_comment += str(error)
-        grade_number -= grade_per_test
-    # 3
-    try:
-        tests_list.append([divide(25, 5), 5, "divide(25, 5)", grade_per_test, True])
-    except NameError as error:
-        if len(grade_comment):
-            grade_comment += ' ;'
-        grade_comment += str(error)
-        grade_number -= grade_per_test
+    grade_number = round(grade_number)
+    grade_comment_str = "None" if grade_comment == "" else grade_comment
+    p(f"functionality_grade= {grade_number} ,functionality_comment= {grade_comment_str}")
+    return grade_number, grade_comment
 
-    # 4
-    try:
-        tests_list.append([modulo_10(63), 3, "modulo_10(63)", grade_per_test, True])
-        tests_list.append([modulo_10(0), 0, "modulo_10(0)", grade_per_test, True])
-    except NameError as error:
-        if len(grade_comment):
-            grade_comment += ' ;'
-        grade_comment += str(error)
-        grade_number -= grade_per_test
 
-    # 5
-    try:
-        tests_list.append([modulo_n(65, 4), 1, "modulo_n(65, 4)", grade_per_test, True])
-        tests_list.append([modulo_n(64, 4), 0, "modulo_n(64, 4)", grade_per_test, True])
-    except NameError as error:
-        if len(grade_comment):
-            grade_comment += ' ;'
-        grade_comment += str(error)
-        grade_number -= grade_per_test
-
-    # 6
-    try:
-        with Capturing() as output:
-            stars_length(123)
-        tests_list.append([output[0], "***", "stars_length(123)", grade_per_test, True])
-
-        with Capturing() as output:
-            stars_length(9)
-        tests_list.append([output[0], "*", "stars_length(9)", grade_per_test, True])
-    except NameError as error:
-        if len(grade_comment):
-            grade_comment += ' ;'
-        grade_comment += str(error)
-        grade_number -= grade_per_test
-
-    # 7
-    try:
-        with Capturing() as output:
-            stars(5)
-        tests_list.append([output[0], "*****", "stars(5)", grade_per_test, True])
-    except NameError as error:
-        if len(grade_comment):
-            grade_comment += ' ;'
-        grade_comment += str(error)
-        grade_number -= grade_per_test
-
-    # 8
+def test_ex2():
+    # Build outputs for specific tests
     triangle_up_side_down_expected_output = []
     for i in range(5, 0, -1):
         triangle_up_side_down_expected_output.append('*' * i)
-    try:
-        with Capturing() as output:
-            triangleUpSideDown(5)
-        tests_list.append(
-            [output, triangle_up_side_down_expected_output, "triangleUpSideDown(5)", grade_per_test, True])
-    except NameError as error:
-        if len(grade_comment):
-            grade_comment += ' ;'
-        grade_comment += str(error)
-        grade_number -= grade_per_test
 
-    # 9
     triangle_expected_output = []
     for i in range(1, 5):
         triangle_expected_output.append('*' * i)
     try:
-        with Capturing() as output:
-            triangle(4)
-        tests_list.append([output, triangle_expected_output, "triangle(4)", grade_per_test, True])
+        tests_list = [
+            [multiple, [[3, 4], [1, 5]], [12, 5], False, 'multiple'],
+            [power, [[3, 4], [1, 5]], [math.pow(3, 4), math.pow(1, 5)], False, 'power'],
+            [divide, [[25, 5], [5, 1]], [5, 5], False, 'divide'],
+            [modulo_10, [[63], [0]], [3, 0], False, 'modulo_10'],
+            [modulo_n, [[65, 4], [64, 4]], [1, 0], False, 'modulo_n'],
+            [stars_length, [[123], [9]], ['***', '*'], True, 'stars_length'],
+            [stars, [[5]], ['*****'], True, 'stars'],
+            [triangleUpSideDown, [[5]], [triangle_up_side_down_expected_output],
+                True, 'triangleUpSideDown'],
+            [triangle, [[4]], [triangle_expected_output],
+             True, 'triangle'],
+            [reverse_number, [[123]], [321], True, 'reverse_number'],
+            [repeat_number, [[123]], [123], True, 'repeat_number'],
+            ]
+
+        test(tests_list)
+
     except NameError as error:
-        if len(grade_comment):
-            grade_comment += ' ;'
-        grade_comment += str(error)
-        grade_number -= grade_per_test
-
-    # 10
-    try:
-        with Capturing() as output:
-            reverse_number(123)
-        tests_list.append([output[0], 321, "reverse_number(123)", grade_per_test, True])
-    except NameError as error:
-        if len(grade_comment):
-            grade_comment += ' ;'
-        grade_comment += str(error)
-        grade_number -= grade_per_test
-
-    # 11 and last
-    try:
-        with Capturing() as output:
-            repeat_number(123)
-        tests_list.append([output[0], 123, "repeat_number(123)", grade_per_test, True])
-    except NameError as error:
-        if len(grade_comment):
-            grade_comment += ' ;'
-        grade_comment += str(error)
-        grade_number -= grade_per_test
-        grade_number = max(grade_number, 0)
-    return tests_list, grade_number, grade_comment
+        p(f"Test failed. functionality_grade= 0 ,functionality_comment= {error}")
+        # return 0, str(error)
 
 
-def ex3_tests():
-    grade_per_test = 20
-    grade_number = 0 # Earn it!
-
-    # 1
+def test_ex3():
+    # Build expected outputs
     expected_result_1_40 = []
     for i in range(1, 41):
         expected_result_1_40.append(i)
 
-    test1 = Test(print_in_loop_1_to_40, [[]], [expected_result_1_40], True, grade_per_test, "for")
-    test1.do_the_test()
-    grade_comment = test1.grade_comment
-    grade_number += test1.actual_grade
-
-    test2 = Test(print_in_while_1_to_40, [[]], [expected_result_1_40], True, grade_per_test, "while")
-    test2.do_the_test()
-    if len(grade_comment):
-        grade_comment += "; "
-    grade_comment += test2.grade_comment
-    grade_number += test2.actual_grade
-
-    # 3
     boom_expected_output = []
     for i in range(0, 101):
         if i % 7 == 0 or "7" in str(i):
             boom_expected_output.append(i)
 
-    test3 = Test(boom, [[]], [boom_expected_output], True, grade_per_test, None)
-    test3.do_the_test()
-    if len(grade_comment):
-        grade_comment += "; "
-    grade_comment += test3.grade_comment
-    grade_number += test3.actual_grade
-
-    # 4
     fib_expected_output = []
     a, b = 0, 1
     while a < 10000:
         fib_expected_output.append(a)
         a, b = b, a + b
 
-    test4 = Test(fib, [[]], [fib_expected_output], True, grade_per_test, None)
-    test4.do_the_test()
-    if len(grade_comment):
-        grade_comment += "; "
-    grade_comment += test4.grade_comment
-    grade_number += test4.actual_grade
-
-    # 5
-    dec_print_expected_output = []
+    print_dec_expected_output = []
     for i in range(0, 51):
         if i % 10 == 0:
-            dec_print_expected_output.append(i // 10)
+            print_dec_expected_output.append(i // 10)
         else:
-            dec_print_expected_output.append(i / 10)
+            print_dec_expected_output.append(i / 10)
 
-    test5 = Test(fib, [[]], [fib_expected_output], True, grade_per_test, None)
-    test5.do_the_test()
-    if len(grade_comment):
-        grade_comment += "; "
-    grade_comment += test5.grade_comment
-    grade_number += test5.actual_grade
-
-    return grade_number, grade_comment
-
-
-def load_ex4_tests():
-    tests_list = []
-    grade_per_test = 6
-    grade_number = 100
-    grade_comment = ""
-
-    # 1
     try:
-        tests_list.append([donuts(4), 'Number of donuts: 4', "donuts(4)", grade_per_test, True])
-        tests_list.append([donuts(9), 'Number of donuts: 9', "donuts(9)", grade_per_test, True])
-        tests_list.append([donuts(10), 'Number of donuts: many', "donuts(10)", grade_per_test, True])
-        tests_list.append([donuts(99), 'Number of donuts: many', "donuts(99)", grade_per_test, True])
-    except NameError as error:
-        if len(grade_comment):
-            grade_comment += ' ;'
-        grade_comment += str(error)
-        grade_number -= grade_per_test
+        tests_list = [
+            [print_in_loop_1_to_40, [[]], [expected_result_1_40], True, "for"],
+            [print_in_while_1_to_40, [[]], [expected_result_1_40], True, "while"],
+            [boom, [[]], [boom_expected_output], True, None],
+            [fib, [[]], [fib_expected_output], True, None],
+            [print_dec, [[]], [print_dec_expected_output], True, None]
+        ]
+        test(tests_list)
 
-    # 2
+    except NameError as error:
+        p(f"Test failed. functionality_grade= 0 ,functionality_comment= {error}")
+        # return 0, str(error)
+
+def test_ex4():
     try:
-        tests_list.append([both_ends('spring'), 'spng', "both_ends('spring')", grade_per_test, True])
-        tests_list.append([both_ends('Hello'), 'Helo', "both_ends('Hello')", grade_per_test, True])
-        tests_list.append([both_ends('a'), '', "both_ends('a')", grade_per_test, True])
-        tests_list.append([both_ends('xyz'), 'xyyz', "both_ends('xyz')", grade_per_test, True])
+        tests_list = [
+            [donuts, [[4], [9], [10], [99]],
+             ['Number of donuts: 4',
+              'Number of donuts: 9',
+              'Number of donuts: many',
+              'Number of donuts: many'], False, None],
+
+            [both_ends, [['spring'], ['Hello'], ['a'], ['xyz']],
+             ['spng', 'Helo', '', 'xyyz'], False, None],
+
+            [fix_start, [['babble'], ['aardvark'], ['google'], ['donut']],
+             ['ba**le', 'a*rdv*rk', 'goo*le', 'donut'], False, None],
+
+            [mix_up, [['mix', 'pod'], ['dog', 'dinner'], ['gnash', 'sport'], ['pezzy', 'firm']],
+             ['pox mid', 'dig donner', 'spash gnort', 'fizzy perm'], False, None]
+
+
+        ]
+        test(tests_list)
+
     except NameError as error:
-        if len(grade_comment):
-            grade_comment += ' ;'
-        grade_comment += str(error)
-        grade_number -= grade_per_test
-
-    # 3
-    try:
-        tests_list.append([fix_start('babble'), 'ba**le', "fix_start('babble')", grade_per_test, True])
-        tests_list.append([fix_start('aardvark'), 'a*rdv*rk', "fix_start('aardvark')", grade_per_test, True])
-        tests_list.append([fix_start('google'), 'goo*le', "fix_start('google')", grade_per_test, True])
-        tests_list.append([fix_start('donut'), 'donut', "fix_start('donut')", grade_per_test, True])
-    except NameError as error:
-
-        if len(grade_comment):
-            grade_comment += ' ;'
-        grade_comment += str(error)
-        grade_number -= grade_per_test
-
-    # 4
-    try:
-        tests_list.append([mix_up('mix', 'pod'), 'pox mid', "mix_up('mix', 'pod')", grade_per_test, True])
-        tests_list.append([mix_up('dog', 'dinner'), 'dig donner', "mix_up('dog', 'dinner')", grade_per_test, True])
-        tests_list.append([mix_up('gnash', 'sport'), 'spash gnort', "mix_up('gnash', 'sport')", grade_per_test, True])
-        tests_list.append([mix_up('pezzy', 'firm'), 'fizzy perm', "mix_up('pezzy', 'firm')", grade_per_test, True])
-    except NameError as error:
-        if len(grade_comment):
-            grade_comment += ' ;'
-        grade_comment += str(error)
-        grade_number -= grade_per_test
-
-    return tests_list, grade_number, grade_comment
-
+        p(f"Test failed. functionality_grade= 0 ,functionality_comment= {error}")
+        return 0, str(error)
 
 def load_ex51_tests():
     tests_list = []
@@ -822,11 +704,14 @@ def do_the_tests(tests_list, grade_number, grade_comment):
 def main():
     tests_list, grade_number, grade_comment = None, None, None
     if "EX2." in student_file:
-        tests_list, grade_number, grade_comment = load_ex2_tests()
+        test_ex2()
+        return  # for now
     elif "EX3." in student_file:
-        grade_number, grade_comment = ex3_tests()
+        test_ex3()
+        return  # for now
     elif "EX4." in student_file:
-        tests_list, grade_number, grade_comment = load_ex4_tests()
+        test_ex4()
+        return  # for now
     elif "EX5." in student_file:
         tests_list1, grade_number1, grade_comment1 = load_ex51_tests()
         tests_list2, grade_number2, grade_comment2 = load_ex52_tests()
@@ -845,8 +730,7 @@ def main():
     else:
         p(f"Can NOT figure which test to run on {student_file}", True)
 
-    if "EX3." not in student_file:
-        do_the_tests(tests_list, grade_number, grade_comment)
+    do_the_tests(tests_list, grade_number, grade_comment)
 
 
 if __name__ == "__main__":
