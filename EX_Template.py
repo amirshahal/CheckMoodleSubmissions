@@ -1,4 +1,4 @@
-# Amir Shahal, Jan 2024
+# Amir Shahal, Feb 2024
 
 from STUDENT_FILE import *
 from datetime import datetime
@@ -32,7 +32,7 @@ class Test:
 
     def __str__(self):
         grade_comment_str = "None" if self.grade_comment == "" else self.grade_comment
-        rv = f"Test {self.function.__name__}({self.params}): " + \
+        rv = f"Test {self.function.__name__}({nice(self.params)}): " + \
              f"grade_number= {round(self.actual_grade, 2)}/{self.max_grade}" + \
              f" ,grade_comment= {grade_comment_str}"
         return rv
@@ -56,8 +56,8 @@ class Test:
                 self.grade_comment = f"Found a problem: {self.function}() does not use/call {self.a_word_to_look_for}"
 
     def __do_specific_test(self, params, expected_result):
+        default_failed_msg = f"{self.function.__name__}() failed"
         try:
-            default_failed_msg = f"{self.function.__name__}() failed"
             if self.capture_output:
                 with Capturing() as actual_result:
                     self.function(*params)
@@ -100,16 +100,26 @@ class Test:
                     if len(self.grade_comment):
                         self.grade_comment += " ;"
                     self.grade_comment += default_failed_msg
+            elif actual_result is None:
+                if expected_result is not None:
+                    self.actual_grade -= self.grade_per_test
+                    if len(self.grade_comment):
+                        self.grade_comment += " ;"
+                    self.grade_comment += default_failed_msg
             else:
                 self.actual_grade -= self.grade_per_test
                 if len(self.grade_comment):
                     self.grade_comment += " ;"
                 self.grade_comment += default_failed_msg
-        except (TypeError, ValueError, IndexError, NameError) as error:
+        except (TypeError, ValueError, IndexError, NameError, PermissionError, FileNotFoundError) as error:
             self.actual_grade -= self.grade_per_test
             if len(self.grade_comment):
                 self.grade_comment += " ;"
-            self.grade_comment += f"{default_failed_msg} ,error= {error}"
+            if type(error).__name__ == "PermissionError":
+                error_str = f"{error}. Maybe you are writing to a directory?"
+            else:
+                error_str = str(error)
+            self.grade_comment += f"{default_failed_msg} ,error= {error_str}"
 
     def __do_the_test(self):
         # First do all general tests for the function, then run the function
@@ -121,7 +131,7 @@ class Test:
             self.actual_grade = 0
             self.grade_comment = f"{self.function} is not callable"
         else:
-            # Function exists, verify the signature is as expected (number of perams)
+            # Function exists, verify the signature is as expected (number of params)
             sig = signature(self.function)
             if len(sig.parameters) != len(self.params[0]):
                 self.actual_grade = 0
@@ -261,7 +271,7 @@ def test_signature(fun, expected_num_of_args):
     return signature_bad_grade, signature_comment
 
 
-def test(tests_list, tests_grades_array=None):
+def the_test(tests_list, tests_grades_array=None):
     number_of_tests = len(tests_list)
     if number_of_tests == 0:
         msg = f"Could not find a valid test for {student_file}"
@@ -312,7 +322,7 @@ def test_ex2():
             [repeat_number, [[123]], [123], True, 'repeat_number'],
             ]
 
-        test(tests_list)
+        the_test(tests_list)
 
     except NameError as error:
         p(f"Test failed. functionality_grade= 0 ,functionality_comment= {error}")
@@ -351,7 +361,7 @@ def test_ex3():
             [fib, [[]], [fib_expected_output], True, None],
             [print_dec, [[]], [print_dec_expected_output], True, None]
         ]
-        test(tests_list)
+        the_test(tests_list)
 
     except NameError as error:
         p(f"Test failed. functionality_grade= 0 ,functionality_comment= {error}")
@@ -378,7 +388,7 @@ def test_ex4():
 
 
         ]
-        test(tests_list)
+        the_test(tests_list)
 
     except NameError as error:
         p(f"Test failed. functionality_grade= 0 ,functionality_comment= {error}")
@@ -395,11 +405,10 @@ def test_ex5(tests_bitmap):
             # strings where the string length is 2 or more and the first
             # and last chars of the string are the same.
 
-            tests_list.append(
-                [match_ends, [[['aba', 'xyz', 'aa', 'x', 'bbb']],
-                               [['', 'x', 'xy', 'xyx', 'xx']],
-                               [['aaa', 'be', 'abc', 'hello']]],
-                               [3, 2 , 1], False, None])
+            tests_list.append([match_ends, [[['aba', 'xyz', 'aa', 'x', 'bbb']],
+                              [['', 'x', 'xy', 'xyx', 'xx']],
+                              [['aaa', 'be', 'abc', 'hello']]],
+                              [3, 2, 1], False, None])
 
             # 2. front_x
             # Given a list of strings, return a list with the strings
@@ -413,10 +422,10 @@ def test_ex5(tests_bitmap):
                 [front_x, [[['bbb', 'ccc', 'axx', 'xzz', 'xaa']],
                            [['xaa', 'xcc', 'aaa', 'bbb', 'ccc']],
                            [['mix', 'xyz', 'apple', 'xanadu', 'aardvark']]],
-                                   [['xaa', 'xzz', 'axx', 'bbb', 'ccc'],
-                                    ['xaa', 'xcc', 'aaa', 'bbb', 'ccc'],
-                                    ['xanadu', 'xyz', 'aardvark', 'apple', 'mix']],
-                            False, None])
+                          [['xaa', 'xzz', 'axx', 'bbb', 'ccc'],
+                           ['xaa', 'xcc', 'aaa', 'bbb', 'ccc'],
+                           ['xanadu', 'xyz', 'aardvark', 'apple', 'mix']],
+                 False, None])
 
             # 3. sort_last
             # Given a list of non-empty tuples, return a list sorted in increasing
@@ -425,10 +434,9 @@ def test_ex5(tests_bitmap):
             # [(2, 2), (1, 3), (3, 4, 5), (1, 7)]
             # Hint: use a custom key= function to extract the last element form each tuple.
 
-            tests_list.append(
-                [sort_last,[[[(1, 3), (3, 2), (2, 1)]],
-                            [[(2, 3), (1, 2), (3, 1)]],
-                            [[(1, 7), (1, 3), (3, 4, 5), (2, 2)]]],
+            tests_list.append([sort_last, [[[(1, 3), (3, 2), (2, 1)]],
+                              [[(2, 3), (1, 2), (3, 1)]],
+                              [[(1, 7), (1, 3), (3, 4, 5), (2, 2)]]],
                             [[(2, 1), (3, 2), (1, 3)],
                              [(3, 1), (1, 2), (2, 3)],
                              [(2, 2), (1, 3), (3, 4, 5), (1, 7)]], False, None])
@@ -472,207 +480,82 @@ def test_ex5(tests_bitmap):
                                               [['aa', 'xx'], ['bb', 'cc', 'zz']],
                                               [['aa', 'aa'], ['aa', 'bb', 'bb']]
                                               ],
-                           [linear_merge1and2, linear_merge1and2, linear_merge3], False, None])
+                              [linear_merge1and2, linear_merge1and2, linear_merge3], False, None])
 
         except NameError as error:
             p(f"Test failed. functionality_grade= 0 ,functionality_comment= {error}")
             # return 0, str(error)
 
-    test(tests_list)
+    the_test(tests_list)
 
-def load_ex6_tests():
-    tests_list = []
-    grade_per_test = 25
-    grade_number = 100
-    grade_comment = ""
-    file_with_2_lines = "file_with_2_lines"
+
+def test_ex6():
+    this_file_as_list_of_lines = []
+    with open(__file__, encoding="utf8") as file_handler:
+        for line in file_handler.readlines():
+            this_file_as_list_of_lines.append(line.rstrip())
+
+    # Add empty line at the end
+    this_file_as_list_of_lines.append("")
+
+    # For write_to_file()
+    file_as_str = '\n'.join(this_file_as_list_of_lines)
+    file_name = 'tmp_file_ex6.txt'
+
+    # for read_3_lines()
+    file_with_4_lines_expected_file_content = []
     file_with_4_lines = "file_with_4_lines"
+    with open(file_with_4_lines, 'w') as file_handler:
+        for i in range(1, 5):
+            file_handler.write(f"{i}\n")
+            if i < 4:
+                file_with_4_lines_expected_file_content.append(f"{i}")
 
-    # 1
-    test_function = True
+    file_with_2_lines_expected_file_content = []
+    file_with_2_lines = "file_with_2_lines"
+    with open(file_with_2_lines, 'w') as file_handler:
+        for i in range(1, 3):
+            file_handler.write(f"{i}\n")
+            file_with_2_lines_expected_file_content.append(f"{i}")
+
+    # For copy_paste()
+    new_dir = "tmp_ex6_dir"
+    if os.path.exists(new_dir):
+        for f in os.listdir(new_dir):
+            os.remove(os.path.join(new_dir, f))
+    else:
+        os.mkdir(new_dir)
+
+    file_in_new_dir = os.path.join(new_dir, file_with_2_lines)
+
     try:
-        assert callable(read_from_file)
+        tests_list = [
+            [read_from_file, [[__file__]], [this_file_as_list_of_lines], True, None],
+            [write_to_file, [[file_name, file_as_str]], [this_file_as_list_of_lines], False, None],
+
+            # Now read what we wrote. Not perfect as if cuts write_to_file to two grades
+            # each one of them with weight equal to a single test's weight but I guess
+            # we can live with this.
+            [read_from_file, [[file_name]], [this_file_as_list_of_lines], True, None],
+
+            [read_3_lines, [[file_with_2_lines], [file_with_4_lines]],
+             [file_with_2_lines_expected_file_content, file_with_4_lines_expected_file_content], True, None],
+
+            [copy_paste, [[file_with_2_lines, new_dir]], [[]], False, None],
+
+            # same problem as above
+            [read_from_file, [[file_in_new_dir]], [file_with_2_lines_expected_file_content], True, None],
+        ]
+
+        # the_test(tests_list, [25, 12.5, 12.5, 25, 12.5, 12.5])
+        the_test(tests_list)
+
     except NameError as error:
-        grade_number -= grade_per_test
-        grade_comment = str(error)
-        test_function = False
-
-    if test_function:
-        signature_bad_grade, signature_comment = test_signature(read_from_file, 1)
-        if signature_bad_grade == 100:
-            grade_number -= grade_per_test
-            grade_comment = signature_comment
-        else:
-            try:
-                actual_file_line_by_line = []
-                with open(__file__, encoding="utf8") as file_handler:
-                    for line in file_handler.readlines():
-                        actual_file_line_by_line.append(line.rstrip())
-                actual_file_line_by_line.append("")
-
-                with Capturing() as output:
-                    read_from_file(__file__)
-                tests_list.append([output, actual_file_line_by_line,
-                              "read_from_file(__file__)", grade_per_test])
-            except (NameError, UnicodeDecodeError) as error:
-                if len(grade_comment):
-                    grade_comment += ' ;'
-                if isinstance(error, UnicodeDecodeError):
-                    grade_comment += "read_from_file() failed. Open file for reading using the following command: " +\
-                                     "open(file, encoding=\"utf8\")"
-                else:
-                    grade_comment += str(error)
-                grade_number -= grade_per_test
-
-    # 2
-    test_function = True
-    try:
-        assert callable(write_to_file)
-    except NameError as error:
-        grade_number -= grade_per_test
-        if len(grade_comment):
-            grade_comment += " ;"
-        grade_comment += str(error)
-        test_function = False
-
-    if test_function:
-        signature_bad_grade, signature_comment = test_signature(write_to_file, 2)
-        if signature_bad_grade == 100:
-            grade_number -= grade_per_test
-            grade_comment = signature_comment
-        else:
-            try:
-                file_as_str = '\n'.join(actual_file_line_by_line)
-                file_name = 'tmp_file_ex6.txt'
-                write_to_file(file_name, file_as_str)
-                with Capturing() as output:
-                    read_from_file(file_name)
-                tests_list.append([output, actual_file_line_by_line,
-                                  f"read_from_file(write_to_file({file_name}, (long string)", grade_per_test])
-            except (NameError, UnicodeDecodeError, TypeError) as error:
-                if len(grade_comment):
-                    grade_comment += ' ;'
-                grade_comment += str(error)
-                grade_number -= grade_per_test
-
-    # 3
-    test_function = True
-    try:
-        assert callable(read_3_lines)
-    except NameError as error:
-        grade_number -= grade_per_test
-        if len(grade_comment):
-            grade_comment += " ;"
-        grade_comment += str(error)
-        test_function = False
-
-    if test_function:
-        signature_bad_grade, signature_comment = test_signature(read_3_lines, 1)
-        if signature_bad_grade == 100:
-            grade_number -= grade_per_test
-            grade_comment = signature_comment
-        else:
-            try:
-                file_with_2_lines_expected_file_content = []
-                with open(file_with_2_lines, 'w') as file_handler:
-                    for i in range(1, 3):
-                        file_handler.write(f"{i}\n")
-                        file_with_2_lines_expected_file_content.append(f"{i}")
-
-                with Capturing() as output:
-                    read_3_lines(file_with_2_lines)
-                tests_list.append([output, file_with_2_lines_expected_file_content,
-                                   "read_3_lines(file_with_2_lines)", int(grade_per_test / 2)])
-            except (NameError, UnicodeDecodeError, TypeError) as error:
-                if len(grade_comment):
-                    grade_comment += ' ;'
-                grade_comment += str(error)
-                grade_number -= grade_per_test
-
-            try:
-                file_with_4_lines_expected_file_content = []
-                with open(file_with_4_lines, 'w') as file_handler:
-                    for i in range(1, 5):
-                        file_handler.write(f"{i}\n")
-                        if i < 4:
-                            file_with_4_lines_expected_file_content.append(f"{i}")
-
-                with Capturing() as output:
-                    read_3_lines(file_with_4_lines)
-                tests_list.append([output, file_with_4_lines_expected_file_content,
-                                   "read_3_lines(file_with_4_lines)", int(grade_per_test / 2)])
-            except (NameError, UnicodeDecodeError, TypeError) as error:
-                if len(grade_comment):
-                    grade_comment += ' ;'
-                grade_comment += str(error)
-                grade_number -= grade_per_test
-
-    # 4
-    test_function = True
-    try:
-        assert callable(copy_paste)
-    except NameError as error:
-        grade_number -= grade_per_test
-        if len(grade_comment):
-            grade_comment += " ;"
-        grade_comment += str(error)
-        test_function = False
-
-    if test_function:
-        signature_bad_grade, signature_comment = test_signature(copy_paste, 2)
-        if signature_bad_grade == 100:
-            grade_number -= grade_per_test
-            grade_comment = signature_comment
-        else:
-            try:
-                new_dir = "temp_ex6_dir"
-                if os.path.exists(new_dir):
-                    for f in os.listdir(new_dir):
-                        os.remove(os.path.join(new_dir, f))
-                else:
-                    os.mkdir(new_dir)
-                file_in_new_dir = os.path.join(new_dir, file_with_2_lines)
-                copy_paste(file_with_2_lines, new_dir)
-                with Capturing() as output:
-                    read_from_file(file_in_new_dir)
-
-                tests_list.append([output, file_with_2_lines_expected_file_content,
-                                   f"copy_paste(ile_with_2_lines, {new_dir})\nread_from_file(file_in_new_dir){file_in_new_dir}",
-                                   grade_per_test])
-            except (NameError, UnicodeDecodeError, TypeError, FileNotFoundError) as error:
-                if len(grade_comment):
-                    grade_comment += ' ;'
-                grade_comment += str(error)
-                grade_number -= grade_per_test
-            except PermissionError as error:
-                if len(grade_comment):
-                    grade_comment += ' ;'
-                grade_comment += str(error) + " (did you provide directory as second argument? " + \
-                                 "or maybe you are trying to open a directory insted of writing to it?)"
-                grade_number -= grade_per_test
-
-    if os.path.exists(file_with_2_lines):
-        os.remove(file_with_2_lines)
-
-    if os.path.exists(file_with_4_lines):
-        os.remove(file_with_4_lines)
-    return tests_list, grade_number, grade_comment
-
-
-def do_the_tests(tests_list, grade_number, grade_comment):
-    for a_test in tests_list:
-        status, msg = finally_a_test(a_test)
-        if status == STATUS_FAILURE:
-            grade_number -= a_test[3]
-            if len(grade_comment):
-                grade_comment += " ;"
-            grade_comment += msg
-
-    print(f"grade_number= {grade_number} ,grade_comment= {grade_comment}")
+        p(f"Test failed. functionality_grade= 0 ,functionality_comment= {error}")
+        return 0, str(error)
 
 
 def main():
-    tests_list, grade_number, grade_comment = None, None, None
     if "EX2." in student_file:
         test_ex2()
     elif "EX3." in student_file:
@@ -685,12 +568,11 @@ def main():
         test_ex5(2)
     elif "EX5" in student_file:
         test_ex5(3)
-        return  # for now
     elif "EX6." in student_file:
-        tests_list, grade_number, grade_comment = load_ex6_tests()
-        do_the_tests(tests_list, grade_number, grade_comment)
+        test_ex6()
     else:
         p(f"Can NOT figure which test to run on {student_file}", True)
+
 
 if __name__ == "__main__":
     main()
