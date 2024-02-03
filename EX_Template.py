@@ -56,14 +56,15 @@ class Test:
                 self.grade_comment = f"Found a problem: {self.function}() does not use/call {self.a_word_to_look_for}"
 
     def __do_specific_test(self, params, expected_result):
-        if self.capture_output:
-            with Capturing() as actual_result:
-                self.function(*params)
-            if len(actual_result) == 1:
-                actual_result = actual_result[0]
-        else:
-            actual_result = self.function(*params)
         try:
+            default_failed_msg = f"{self.function.__name__}() failed"
+            if self.capture_output:
+                with Capturing() as actual_result:
+                    self.function(*params)
+                if len(actual_result) == 1:
+                    actual_result = actual_result[0]
+            else:
+                actual_result = self.function(*params)
             default_failed_msg = f"{self.function.__name__}() expected_result= {nice(expected_result)} " +\
                                  f",actual_result={nice(actual_result)}"
             if isinstance(actual_result, list):
@@ -104,11 +105,11 @@ class Test:
                 if len(self.grade_comment):
                     self.grade_comment += " ;"
                 self.grade_comment += default_failed_msg
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, IndexError, NameError) as error:
             self.actual_grade -= self.grade_per_test
             if len(self.grade_comment):
                 self.grade_comment += " ;"
-            self.grade_comment += default_failed_msg
+            self.grade_comment += f"{default_failed_msg} ,error= {error}"
 
     def __do_the_test(self):
         # First do all general tests for the function, then run the function
@@ -262,6 +263,10 @@ def test_signature(fun, expected_num_of_args):
 
 def test(tests_list, tests_grades_array=None):
     number_of_tests = len(tests_list)
+    if number_of_tests == 0:
+        msg = f"Could not find a valid test for {student_file}"
+        p(f"Test failed. functionality_grade= 0 ,functionality_comment= {msg}")
+        return 0, msg
     default_grade_per_test = round(100 / number_of_tests, 2)
     grade_number = 0  # Earn it!
     grade_comment = ""
@@ -380,115 +385,60 @@ def test_ex4():
         return 0, str(error)
 
 
-def load_ex51_tests():
+def test_ex5(tests_bitmap):
     tests_list = []
-    grade_per_test = 11
-    grade_number = 100
-    grade_comment = ""
+    if tests_bitmap & 1:
+        try:
 
-    # 1
-    # A. match_ends
-    # Given a list of strings, return the count of the number of
-    # strings where the string length is 2 or more and the first
-    # and last chars of the string are the same.
+            # 1. match_ends
+            # Given a list of strings, return the count of the number of
+            # strings where the string length is 2 or more and the first
+            # and last chars of the string are the same.
 
-    try:
-        # 1
-        tests_list.append([match_ends(['aba', 'xyz', 'aa', 'x', 'bbb']), 3,
-                           "match_ends(['aba', 'xyz', 'aa', 'x', 'bbb'])", grade_per_test])
-        tests_list.append([match_ends(['', 'x', 'xy', 'xyx', 'xx']), 2,
-                           "match_ends(['', 'x', 'xy', 'xyx', 'xx'])", grade_per_test])
-        tests_list.append([match_ends(['aaa', 'be', 'abc', 'hello']), 1,
-                           "match_ends(['aaa', 'be', 'abc', 'hello'])", grade_per_test])
-    except NameError as error:
-        if len(grade_comment):
-            grade_comment += ' ;'
-        grade_comment += str(error)
-        grade_number -= grade_per_test
+            tests_list.append(
+                [match_ends, [[['aba', 'xyz', 'aa', 'x', 'bbb']],
+                               [['', 'x', 'xy', 'xyx', 'xx']],
+                               [['aaa', 'be', 'abc', 'hello']]],
+                               [3, 2 , 1], False, None])
 
-    # 2
-    # B. front_x
-    # Given a list of strings, return a list with the strings
-    # in sorted order, except group all the strings that begin with 'x' first.
-    # e.g. ['mix', 'xyz', 'apple', 'xanadu', 'aardvark'] yields
-    # ['xanadu', 'xyz', 'aardvark', 'apple', 'mix']
-    # Hint: this can be done by making 2 lists and sorting each of them
-    # before combining them.
+            # 2. front_x
+            # Given a list of strings, return a list with the strings
+            # in sorted order, except group all the strings that begin with 'x' first.
+            # e.g. ['mix', 'xyz', 'apple', 'xanadu', 'aardvark'] yields
+            # ['xanadu', 'xyz', 'aardvark', 'apple', 'mix']
+            # Hint: this can be done by making 2 lists and sorting each of them
+            # before combining them.
 
-    try:
-        tests_list.append([front_x(['bbb', 'ccc', 'axx', 'xzz', 'xaa']),
-                           ['xaa', 'xzz', 'axx', 'bbb', 'ccc'],
-                            "front_x(['bbb', 'ccc', 'axx', 'xzz', 'xaa'])", grade_per_test])
-        tests_list.append([front_x(['ccc', 'bbb', 'aaa', 'xcc', 'xaa']),
-                           ['xaa', 'xcc', 'aaa', 'bbb', 'ccc'],
-                          "front_x(['ccc', 'bbb', 'aaa', 'xcc', 'xaa'])", grade_per_test])
-        tests_list.append([front_x(['mix', 'xyz', 'apple', 'xanadu', 'aardvark']),
-                           ['xanadu', 'xyz', 'aardvark', 'apple', 'mix'],
-                            "front_x(['mix', 'xyz', 'apple', 'xanadu', 'aardvark'])", grade_per_test])
+            tests_list.append(
+                [front_x, [[['bbb', 'ccc', 'axx', 'xzz', 'xaa']],
+                           [['xaa', 'xcc', 'aaa', 'bbb', 'ccc']],
+                           [['mix', 'xyz', 'apple', 'xanadu', 'aardvark']]],
+                                   [['xaa', 'xzz', 'axx', 'bbb', 'ccc'],
+                                    ['xaa', 'xcc', 'aaa', 'bbb', 'ccc'],
+                                    ['xanadu', 'xyz', 'aardvark', 'apple', 'mix']],
+                            False, None])
 
-    except NameError as error:
-        if len(grade_comment):
-            grade_comment += ' ;'
-        grade_comment += str(error)
-        grade_number -= grade_per_test
+            # 3. sort_last
+            # Given a list of non-empty tuples, return a list sorted in increasing
+            # order by the last element in each tuple.
+            # e.g. [(1, 7), (1, 3), (3, 4, 5), (2, 2)] yields
+            # [(2, 2), (1, 3), (3, 4, 5), (1, 7)]
+            # Hint: use a custom key= function to extract the last element form each tuple.
 
+            tests_list.append(
+                [sort_last,[[[(1, 3), (3, 2), (2, 1)]],
+                            [[(2, 3), (1, 2), (3, 1)]],
+                            [[(1, 7), (1, 3), (3, 4, 5), (2, 2)]]],
+                            [[(2, 1), (3, 2), (1, 3)],
+                             [(3, 1), (1, 2), (2, 3)],
+                             [(2, 2), (1, 3), (3, 4, 5), (1, 7)]], False, None])
 
-    # 3
-    # C. sort_last
-    # Given a list of non-empty tuples, return a list sorted in increasing
-    # order by the last element in each tuple.
-    # e.g. [(1, 7), (1, 3), (3, 4, 5), (2, 2)] yields
-    # [(2, 2), (1, 3), (3, 4, 5), (1, 7)]
-    # Hint: use a custom key= function to extract the last element form each tuple.
+        except NameError as error:
+            p(f"Test failed. functionality_grade= 0 ,functionality_comment= {error}")
+            # return 0, str(error)
 
-    try:
-        tests_list.append([sort_last([(1, 3), (3, 2), (2, 1)]),
-                           [(2, 1), (3, 2), (1, 3)],
-                            "sort_last([(1, 3), (3, 2), (2, 1)])", grade_per_test])
-        tests_list.append([sort_last([(2, 3), (1, 2), (3, 1)]),
-                           [(3, 1), (1, 2), (2, 3)],
-                            "sort_last([(2, 3), (1, 2), (3, 1])", grade_per_test])
-        tests_list.append([sort_last([(1, 7), (1, 3), (3, 4, 5), (2, 2)]),
-                           [(2, 2), (1, 3), (3, 4, 5), (1, 7)],
-                            "sort_last([(1, 7), (1, 3), (3, 4, 5), (2, 2)])", grade_per_test])
-
-    except NameError as error:
-        if len(grade_comment):
-            grade_comment += ' ;'
-        grade_comment += str(error)
-        grade_number -= grade_per_test
-
-    return tests_list, grade_number, grade_comment
-
-
-def load_ex52_tests():
-    tests_list = []
-    grade_per_test = 17
-    grade_number = 100
-    grade_comment = ""
-
-    # 1
-    try:
-        # 1
-        expected_remove_adjacent1 = []
-        for i in range(1, 4):
-            expected_remove_adjacent1.append(i)
-
-        expected_remove_adjacent2 = []
-        for i in range(2, 4):
-            expected_remove_adjacent2.append(i)
-
-        tests_list.append([remove_adjacent([1, 2, 2, 3]), expected_remove_adjacent1,
-                           "remove_adjacent([1, 2, 2, 3])", grade_per_test, True])
-        tests_list.append([remove_adjacent([2, 2, 3, 3, 3]), expected_remove_adjacent2,
-                           "remove_adjacent([2, 2, 2, 3, 3])", grade_per_test, True])
-        tests_list.append([remove_adjacent([]), [],
-                           "remove_adjacent([])", grade_per_test, True])
-    except NameError as error:
-        if len(grade_comment):
-            grade_comment += ' ;'
-        grade_comment += str(error)
-        grade_number -= grade_per_test
+    if tests_bitmap & 2:
+        """
 
     # 2
     linear_merge1 = ['aa', 'bb', 'cc', 'xx', 'zz']
@@ -503,14 +453,32 @@ def load_ex52_tests():
         tests_list.append([linear_merge(['aa', 'aa'], ['aa', 'bb', 'bb']),
                            linear_merge3, "linear_merge(['aa', 'aa'], ['aa', 'bb', 'bb'])", grade_per_test, True])
 
-    except NameError as error:
-        if len(grade_comment):
-            grade_comment += ' ;'
-        grade_comment += str(error)
-        grade_number -= grade_per_test
+        """
+        try:
+            tests_list.append([remove_adjacent, [[[1, 2, 3]], [[2, 2, 3, 3, 3]], [[]]],
+                               [[1, 2, 3], [2, 3], []], False, None])
 
-    return tests_list, grade_number, grade_comment
+            # 5. Given two lists sorted in increasing order, create and return a merged
+            # list of all the elements in sorted order. You may modify the passed in lists.
+            # Ideally, the solution should work in "linear" time, making a single
+            # pass of both lists.
+            #
+            # NOTE - DO NOT use return sorted(sorted1 + sorted2) - that's too easy :-)
+            #
+            linear_merge1and2 = ['aa', 'bb', 'cc', 'xx', 'zz']
+            linear_merge3 = ['aa', 'aa', 'aa', 'bb', 'bb']
 
+            tests_list.append([linear_merge, [[['aa', 'xx', 'zz'], ['bb', 'cc']],
+                                              [['aa', 'xx'], ['bb', 'cc', 'zz']],
+                                              [['aa', 'aa'], ['aa', 'bb', 'bb']]
+                                              ],
+                           [linear_merge1and2, linear_merge1and2, linear_merge3], False, None])
+
+        except NameError as error:
+            p(f"Test failed. functionality_grade= 0 ,functionality_comment= {error}")
+            # return 0, str(error)
+
+    test(tests_list)
 
 def load_ex6_tests():
     tests_list = []
@@ -707,33 +675,22 @@ def main():
     tests_list, grade_number, grade_comment = None, None, None
     if "EX2." in student_file:
         test_ex2()
-        return  # for now
     elif "EX3." in student_file:
         test_ex3()
-        return  # for now
     elif "EX4." in student_file:
         test_ex4()
-        return  # for now
-    elif "EX5." in student_file:
-        tests_list1, grade_number1, grade_comment1 = load_ex51_tests()
-        tests_list2, grade_number2, grade_comment2 = load_ex52_tests()
-        tests_list = tests_list1 + tests_list2
-        grade_comment = f"{grade_comment1}"
-        if len(grade_comment):
-            grade_comment += ", "
-        grade_comment += grade_comment2
-        grade_number = round((grade_number1 + grade_number2) / 2)
     elif "EX51." in student_file:
-        tests_list, grade_number, grade_comment = load_ex51_tests()
+        test_ex5(1)
     elif "EX52." in student_file:
-        tests_list, grade_number, grade_comment = load_ex52_tests()
+        test_ex5(2)
+    elif "EX5" in student_file:
+        test_ex5(3)
+        return  # for now
     elif "EX6." in student_file:
         tests_list, grade_number, grade_comment = load_ex6_tests()
+        do_the_tests(tests_list, grade_number, grade_comment)
     else:
         p(f"Can NOT figure which test to run on {student_file}", True)
-
-    do_the_tests(tests_list, grade_number, grade_comment)
-
 
 if __name__ == "__main__":
     main()
