@@ -162,79 +162,6 @@ class Capturing(list):
         sys.stdout = self._stdout
 
 
-def finally_a_test(a_test):
-    actual_result = a_test[0]
-    expected_result = a_test[1]
-    function_name = a_test[2]
-    should_test_if_recursive = a_test[4] if len(a_test) > 4 else False
-    a_word_to_look_for = a_test[5] if len(a_test) > 5 else None
-    p(f"Testing {function_name}")
-    status = STATUS_SUCCESS
-    detailed_msg = f" expected_result= {nice(expected_result)} ,actual_result={nice(actual_result)}"
-
-    try:
-        if isinstance(actual_result, list):
-            if len(actual_result) != len(expected_result):
-                status = STATUS_FAILURE
-                detailed_msg = f"Expecting {len(expected_result)} lines, found {len(actual_result)}. "
-                if len(actual_result) and len(expected_result):
-                    detailed_msg += f"First line: expected {expected_result[0]}, found {actual_result[0]}. " + \
-                                    f"Last line: expected {expected_result[-1]}, found {actual_result[-1]}"
-            else:
-                for line_num, expected_line in enumerate(expected_result):
-                    if str(expected_line) != str(actual_result[line_num]):
-                        status = STATUS_FAILURE
-                        detailed_msg = f"line #{line_num}: expecting {expected_line} found {actual_result[line_num]}"
-
-        elif isinstance(expected_result, (int, float)) and isinstance(actual_result, (int, float, str)):
-            status = abs(expected_result - float(actual_result)) >= EPSILON
-
-        elif isinstance(expected_result, str) and isinstance(actual_result, str):
-            status = expected_result != actual_result
-
-        else:
-            status = STATUS_FAILURE
-    except (TypeError, ValueError):
-        status = STATUS_FAILURE
-
-    status_text = "OK" if status == STATUS_SUCCESS else "Failure"
-    msg = f"Testing {function_name} ,result= {status_text} ,details={detailed_msg}"
-
-    #################
-    # Additional tests, if needed
-    current_dir = os.getcwd()
-    original_student_file = os.path.join(current_dir, student_file)
-
-    if should_test_if_recursive:
-        if "(" in function_name:
-            function_name, _ = function_name.split('(')
-        recursive_status, recursive_comment = test_if_recursive(original_student_file, function_name)
-
-        if recursive_status == STATUS_FAILURE:
-            status = STATUS_FAILURE
-            if len(msg):
-                msg += ";"
-            msg += f"{recursive_comment}"
-
-    if a_word_to_look_for is not None:
-        word_test_status, word_test_comment = test_if_function_contains_a_word(original_student_file, function_name,
-                                                                               a_word_to_look_for)
-
-        if word_test_status == STATUS_FAILURE:
-            status = STATUS_FAILURE
-            if len(msg):
-                msg += ";"
-            msg += f"{word_test_comment}"
-
-    status_text = "OK" if status == STATUS_SUCCESS else "Failed"
-    p(f"test(): status= {status_text} ,msg= {msg}")
-    return status, msg
-
-
-def test_if_recursive(file_name, function):
-    return test_if_function_contains_a_word(file_name, function, f"{function}(")
-
-
 def p(msg, should_exit=False):
     if should_exit:
         msg += " .Quitting"
@@ -258,17 +185,6 @@ def nice(str_in):
     if str_out.strip() == "":
         str_out = f"({len(str_in)} white spaces)"
     return str_out
-
-
-def test_signature(fun, expected_num_of_args):
-    signature_bad_grade = 0
-    signature_comment = ""
-    sig = signature(fun)
-    if len(sig.parameters) != expected_num_of_args:
-        signature_bad_grade = 100
-        signature_comment = f"{fun.__name__}(): bad signature. The function expects {len(sig.parameters)} " + \
-                            f"parameters instead of {expected_num_of_args}"
-    return signature_bad_grade, signature_comment
 
 
 def the_test(tests_list, tests_grades_array=None):
