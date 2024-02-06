@@ -1,4 +1,4 @@
-# Amir Shahal, Feb 2024
+# Amir Shahal and Co., Feb 2024
 
 
 from STUDENT_FILE import *
