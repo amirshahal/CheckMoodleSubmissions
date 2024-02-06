@@ -111,7 +111,8 @@ class Test:
                 if len(self.grade_comment):
                     self.grade_comment += " ;"
                 self.grade_comment += default_failed_msg
-        except (TypeError, ValueError, IndexError, NameError, PermissionError, FileNotFoundError) as error:
+        except (TypeError, ValueError, IndexError, NameError, PermissionError, FileNotFoundError, AttributeError) \
+                as error:
             self.actual_grade -= self.grade_per_test
             if len(self.grade_comment):
                 self.grade_comment += " ;"
@@ -447,7 +448,7 @@ def test_ex6():
     try:
         tests_list = [
             [read_from_file, [[__file__]], [this_file_as_list_of_lines], True, None],
-            [write_to_file, [[file_name, file_as_str]], [this_file_as_list_of_lines], False, None],
+            [write_to_file, [[file_name, file_as_str]], [None], False, None],
 
             # Now read what we wrote. Not perfect as if cuts write_to_file to two grades
             # each one of them with weight equal to a single test's weight but I guess
@@ -457,7 +458,7 @@ def test_ex6():
             [read_3_lines, [[file_with_2_lines], [file_with_4_lines]],
              [file_with_2_lines_expected_file_content, file_with_4_lines_expected_file_content], True, None],
 
-            [copy_paste, [[file_with_2_lines, new_dir]], [[]], False, None],
+            [copy_paste, [[file_with_2_lines, new_dir]], [None], False, None],
 
             # same problem as above
             [read_from_file, [[file_in_new_dir]], [file_with_2_lines_expected_file_content], True, None],
