@@ -9,7 +9,6 @@ import math
 import os
 import sys
 
-
 EPSILON = 1e-5
 STATUS_SUCCESS = False
 STATUS_FAILURE = True
