@@ -55,16 +55,20 @@ class Student:
             self.phone_number = self.meta_data_df[
                 self.meta_data_df['HebrewMoodleName'] == self.hebrew_name_from_moodle]['PhoneNumber'].values[0]
 
-            if isinstance(self.phone_number, str) and self.phone_number == "":
-                self.phone_number = None
-            else:
-                self.phone_number = str(int(self.phone_number))
-                if self.phone_number.startswith('0'):
-                    self.phone_number = self.phone_number[1:]
-                self.phone_number = f"+972{self.phone_number}"
+
         except KeyError as error:
             p(f"self.set_ids_from_folder_name(): Failed to read ids from {args.students_personal_data_file} " +
               f"error message: {error}", True)
+
+    def set_phone_number(self, phone_number):
+        if isinstance(phone_number, str) and phone_number == "":
+            self.phone_number = None
+        else:
+            self.phone_number = str(int(phone_number))
+            if self.phone_number.startswith('0'):
+                self.phone_number = self.phone_number[1:]
+            self.phone_number = f"+972{self.phone_number}"
+
 
     def get_output_list(self):
         if isinstance(self.grade_comment, (list, tuple)):
@@ -265,7 +269,8 @@ class CheckStudentsSubmission:
              "EX5." in full_file_name or \
              "EX51." in full_file_name or \
              "EX52." in full_file_name or \
-             "EX6." in full_file_name:
+             "EX6." in full_file_name or \
+             "EX7." in full_file_name:
             exercise_name = None
             base_name = os.path.basename(full_file_name)
             match = re.search(r"EX(\d+)", base_name)
@@ -432,29 +437,33 @@ class CheckStudentsSubmission:
         student.print_summary()
 
     def test_students_code(self):
-        list_of_students_to_check = None
+        df_of_students_to_check = None
         if len(self.students) == 0:
             p(f"Something is totally wrong! No students found", True)
         for student in sorted(self.students):
             if args.student_short_name is None or args.student_short_name == student.short_name:
-                if list_of_students_to_check is None:
-                    list_of_students_to_check = self.student_data_df.ShortName.to_list()
-                list_of_students_to_check.remove(student.short_name)
+                if df_of_students_to_check is None:
+                    df_of_students_to_check = self.student_data_df.copy()
+
+                df_of_students_to_check.drop(
+                    df_of_students_to_check.loc[df_of_students_to_check['ShortName'] == student.short_name].index, inplace=True)
+
                 self.test_student_code(student)
 
         # In case we test one student only, end here
         if args.student_short_name is not None:
             sys.exit(0)
-        self.test_not_submitted(list_of_students_to_check)
+        self.test_not_submitted(df_of_students_to_check)
 
-    def test_not_submitted(self, list_of_students_to_check):
-        # Now list_of_students_to_check contains the students that didn't submit :-(
-        for student_hebrew_name in list_of_students_to_check.keys():
+    def test_not_submitted(self, df_of_students_to_check):
+        # Now df_of_students_to_check contains the students that didn't submit :-(
+        for index, row in df_of_students_to_check.iterrows():
             student = Student(None)  # will it work?
             student.path = args.path
-            student.hebrew_name_from_moodle = student_hebrew_name
-            student.id = list_of_students_to_check[student_hebrew_name][0]
-            student.short_name = list_of_students_to_check[student_hebrew_name][1]
+            student.hebrew_name_from_moodle = row['HebrewMoodleName']
+            student.id = row['ID']
+            student.short_name = row['ShortName']
+            student.set_phone_number(row['PhoneNumber'])
             student.grade_number = 0
             student.grade_comment = "לא הוגש"
             self.students.append(student)
