@@ -44,7 +44,7 @@ class Student:
 
     def set_ids_from_folder_name(self):
         self.hebrew_name_from_moodle = re.sub(r'[_a-zA-Z0-9]+', '', self.moodle_original_directory_name)
-        p(f"now doing {self.hebrew_name_from_moodle}")
+        # p(f"now doing {self.hebrew_name_from_moodle}")
         try:
             self.id = str(self.meta_data_df[
                 self.meta_data_df['HebrewMoodleName'] == self.hebrew_name_from_moodle]['ID'].values[0])

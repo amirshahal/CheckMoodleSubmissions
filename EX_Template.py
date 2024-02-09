@@ -1,13 +1,19 @@
 # Amir Shahal and Co., Feb 2024
 
+# First handle not runnable student code.
+import sys
+try:
+    from STUDENT_FILE import *
+except Exception as error:
+    print(f"functionality_grade= 0 ,functionality_comment= STUDENT_FILE is not runnable b/c of the following error: " +
+          f"{error}", file=sys.stderr)
+    sys.exit(0)
 
-from STUDENT_FILE import *
 from datetime import datetime
 from inspect import signature
 from io import StringIO
 import math
 import os
-import sys
 
 EPSILON = 1e-5
 STATUS_SUCCESS = False
@@ -406,6 +412,8 @@ def test_ex5(tests_bitmap):
 
     the_test(tests_list)
 
+def test_ex7():
+    pass
 
 def test_ex6():
     this_file_as_list_of_lines = []
@@ -488,6 +496,8 @@ def main():
         test_ex5(3)
     elif "EX6." in student_file:
         test_ex6()
+    elif "EX7." in student_file:
+        test_ex7()
     else:
         p(f"Can NOT figure which test to run on {student_file}", True)
 
